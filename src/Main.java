@@ -8,17 +8,21 @@ import java.util.regex.Pattern;
 
 public class Main {
     public static ArrayList<TopicNode> getTopics(TopicNode page) {
-        StringBuilder sb;
+        ArrayList<TopicNode> topics = new ArrayList<>();
+        Pattern linkPattern = Pattern.compile("<a[^>]+href=[\"']?/wiki/([^\"']+)[\"']?[^>]*>(.+?)</a>");
+        Matcher linkMatcher;
 
         try {
             URL url = new URL("https://en.wikipedia.org/wiki/" + page.topic);
             BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
 
-            sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
+                linkMatcher = linkPattern.matcher(line);
+                while (linkMatcher.find()) {
+                    if (linkMatcher.group(1).contains(":")) continue;
+                    topics.add(new TopicNode(linkMatcher.group(1), page));
+                }
             }
         }
         catch (IOException e) {
@@ -26,20 +30,10 @@ public class Main {
             return null;
         }
 
-        String wikiPage = sb.toString();
-        Pattern linkPattern = Pattern.compile("<a[^>]+href=[\"']?/wiki/([^\"']+)[\"']?[^>]*>(.+?)</a>");
-        Matcher linkMatcher = linkPattern.matcher(wikiPage);
-
-        ArrayList<TopicNode> topics = new ArrayList<>();
-        while (linkMatcher.find()) {
-            if (linkMatcher.group(1).contains(":")) continue;
-            topics.add(new TopicNode(linkMatcher.group(1), page));
-        }
         return topics;
     }
 
     public static ArrayList<String> bfs(String start, String goal) {
-        //TODO: optimize!
         //TODO: take care of redirect links
         if (start.equals(goal)) {
             ArrayList<String> path = new ArrayList<>();
@@ -83,7 +77,7 @@ public class Main {
 
     public static void run() {
         Instant start = Instant.now();
-        ArrayList<String> path = bfs("Vela_incident", "List_of_WWE_personnel");
+        ArrayList<String> path = bfs("Gouda_cheese", "Java_(programming_language)");
         Instant end = Instant.now();
         if (path == null) {
             System.out.println("null");
